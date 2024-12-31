@@ -4,157 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal Streaming Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest"></script>
     <style>
         body {
-            background-color: black;
-            color: white;
             font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
             margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             align-items: center;
+            justify-content: center;
             height: 100vh;
         }
-
-        #header {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 20px 0;
-            text-align: center;
+        h1 {
+            margin: 10px 0;
         }
-
-        #streaming-container {
-            width: 100%;
-            max-width: 800px;
-            margin: 20px auto;
-            text-align: center;
-        }
-
         #player {
-            width: 100%;
-            height: 400px;
-            background-color: black;
-            border: 1px solid white;
+            width: 80%;
+            max-width: 800px;
+            height: 450px;
+            border: 2px solid #444;
+            background: #000;
+            border-radius: 10px;
         }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        select {
-            padding: 5px;
-            border: 1px solid white;
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 60%;
             border-radius: 5px;
-            background-color: black;
-            color: white;
-            font-size: 16px;
-        }
-
-        #telegram-button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
             border: none;
-            border-radius: 5px;
+            outline: none;
+           }
+        button {
+            background-color: #0078d4;
+            color: #fff;
             cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #005a9e;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/clappr@latest"></script>
 </head>
 <body>
-
-<!-- Header -->
-<div id="header">Universal Streaming Player</div>
-
-<!-- Video Streaming Section -->
-<div id="streaming-container">
+    <h1>Universal Streaming Player</h1>
     <div id="player"></div>
-    <div class="controls">
-        <select id="quality-selector" onchange="changeQuality()">
-            <option value="auto">Auto</option>
-            <option value="0">144p</option>
-            <option value="1">240p</option>
-            <option value="2">360p</option>
-            <option value="3">480p</option>
-            <option value="4">720p</option>
-            <option value="5">1080p</option>
-        </select>
-        <button id="telegram-button" onclick="joinTelegram()">Join Telegram</button>
-    </div>
-</div>
+    <input type="text" id="streamUrl" placeholder="Enter Video Stream URL (RTMP, HLS, MP4)">
+    <button onclick="loadStream()">Play Video</button>
 
-<script>
-    // Function to get the URL parameter
-    function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-    }
+    <script>
+        let player;
 
-    // Get HLS URL from query parameter
-    const hlsUrl = getQueryParam('url');
+        function loadStream() {
+            const streamUrl = document.getElementById('streamUrl').value;
 
-    let player;
+            // Destroy the existing player instance
+            if (player) player.destroy();
 
-    if (hlsUrl) {
-        console.log('HLS URL: ', hlsUrl); // Log to check if the URL is correctly fetched
-
-        // Initialize Clappr Player
-        player = new Clappr.Player({
-            source: hlsUrl,
-            parentId: "#player",
-            autoPlay: true,
-            mute: false,
-            height: '100%',
-            width: '100%',
-            playback: {
-                controls: true,
-            },
-        });
-
-        // Add Event Listener for Quality Levels
-        player.on(Clappr.Events.PLAYBACK_LEVELS_AVAILABLE, function(levels) {
-            const qualitySelector = document.getElementById('quality-selector');
-
-            // Clear existing options and add "Auto" as the first option
-            qualitySelector.innerHTML = '<option value="auto">Auto</option>';
-
-            // Add quality levels dynamically
-            levels.forEach((level, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${level.height}p`; // Display resolution (e.g., 144p, 240p, etc.)
-                qualitySelector.appendChild(option);
+            // Create a new Clappr player instance
+            player = new Clappr.Player({
+                source: streamUrl,
+                parentId: "#player",
+                autoPlay: true,
+                height: "100%",
+                width: "100%",
+                plugins: [Clappr.FlasHLS], // For legacy streams
             });
-        });
-    } else {
-        console.error("No URL parameter provided. Please add '?url=your_hls_link.m3u8' to the URL.");
-        alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
-    }
-
-    // Function to change quality
-    function changeQuality() {
-        const qualitySelector = document.getElementById('quality-selector');
-        const quality = qualitySelector.value;
-
-        if (quality === 'auto') {
-            player.setCurrentLevel(-1); // Auto Quality
-        } else {
-            player.setCurrentLevel(parseInt(quality)); // Set specific quality based on index
         }
-    }
-
-    // Function to open Telegram channel
-    function joinTelegram() {
-        window.open('https://t.me/CricketSparx', '_blank');
-    }
-</script>
-
+    </script>
 </body>
-</html>
+</html> 
