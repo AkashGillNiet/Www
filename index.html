@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CricketSparx</title>
-    <link href="https://vjs.zencdn.net/7.11.4/video-js.css" rel="stylesheet">
+    <title>Cricket Sparx</title>
     <style>
         body {
             background-color: black;
@@ -44,10 +43,12 @@
             font-size: 16px;
             cursor: pointer;
         }
+
         #join-now {
             background-color: #007bff;
             color: white;
         }
+
         #already-joined {
             background-color: #28a745;
             color: white;
@@ -98,6 +99,7 @@
             cursor: pointer;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest"></script>
 </head>
 <body>
 
@@ -113,7 +115,7 @@
 
 <!-- Video Streaming Section -->
 <div id="streaming-container">
-    <video id="video" class="video-js vjs-default-skin" controls></video>
+    <div id="player"></div>
     <div class="controls">
         <select id="quality-selector" onchange="changeQuality()">
             <option value="auto">Auto</option>
@@ -128,9 +130,6 @@
     </div>
 </div>
 
-<script src="https://vjs.zencdn.net/7.11.4/video.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 <script>
     // Function to get the URL parameter
     function getQueryParam(param) {
@@ -140,41 +139,52 @@
 
     // Get HLS URL from query parameter
     const hlsUrl = getQueryParam('url');
-    console.log("HLS URL:", hlsUrl); // Debug log to check if the URL is fetched
+
+    let player;
 
     if (hlsUrl) {
-        // Initialize Video.js Player
-        const player = videojs('video', {
-            autoplay: true,
-            muted: false,
-            controls: true,
+        // Initialize Clappr Player
+        player = new Clappr.Player({
+            source: hlsUrl,
+            parentId: "#player",
+            autoPlay: true,
+            mute: false,
+            height: '100%',
+            width: '100%',
+            playback: {
+                controls: true,
+            },
         });
 
-        // Check if HLS.js is supported in the browser
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(hlsUrl);
-            hls.attachMedia(player.tech().el());
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                console.log('Manifest loaded');
-            });
-        } else if (player.tech().hls) {
-            player.src({ type: 'application/x-mpegURL', src: hlsUrl });
-        }
-
-        // Function to handle quality change
-        function changeQuality() {
+        // Add Event Listener for Quality Levels
+        player.on(Clappr.Events.PLAYBACK_LEVELS_AVAILABLE, function(levels) {
             const qualitySelector = document.getElementById('quality-selector');
-            const quality = qualitySelector.value;
 
-            if (quality === 'auto') {
-                player.playbackRate(1); // Auto Quality
-            } else {
-                player.playbackRate(parseFloat(quality)); // Adjust playback rate for quality change
-            }
-        }
+            // Clear existing options and add "Auto" as the first option
+            qualitySelector.innerHTML = '<option value="auto">Auto</option>';
+
+            // Add quality levels dynamically
+            levels.forEach((level, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${level.height}p`; // Display resolution (e.g., 144p, 240p, etc.)
+                qualitySelector.appendChild(option);
+            });
+        });
     } else {
         alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
+    }
+
+    // Function to change quality
+    function changeQuality() {
+        const qualitySelector = document.getElementById('quality-selector');
+        const quality = qualitySelector.value;
+
+        if (quality === 'auto') {
+            player.setCurrentLevel(-1); // Auto Quality
+        } else {
+            player.setCurrentLevel(parseInt(quality)); // Set specific quality based on index
+        }
     }
 
     // Function to handle "Join Now" button
