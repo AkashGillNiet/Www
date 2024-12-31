@@ -68,11 +68,6 @@
             margin: 20px auto;
             text-align: center;
         }
-        #player {
-            width: 100%;
-            height: auto;
-            border: 1px solid white;
-        }
 
         /* Button and Quality Selector */
         .controls {
@@ -102,7 +97,7 @@
             cursor: pointer;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
 </head>
 <body>
 
@@ -118,7 +113,7 @@
 
 <!-- Video Streaming Section -->
 <div id="streaming-container">
-    <video id="player" controls></video>
+    <div id="player"></div>
     <div class="controls">
         <select id="quality-selector" onchange="changeQuality()">
             <option value="auto">Auto</option>
@@ -144,44 +139,59 @@
     const hlsUrl = getQueryParam('url');
     console.log("HLS URL:", hlsUrl); // Debug log to check if the URL is fetched
 
-    if (hlsUrl && Hls.isSupported()) {
-        // Initialize HLS.js Player
-        var video = document.getElementById('player');
-        var hls = new Hls();
-        
-        // Attach the HLS stream to the video element
-        hls.loadSource(hlsUrl);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            console.log("HLS manifest parsed and video is ready");
+    let player;
+
+    if (hlsUrl) {
+        // Initialize Clappr Player (Universal Player)
+        player = new Clappr.Player({
+            source: hlsUrl,
+            parentId: "#player",
+            autoPlay: true,
+            mute: false,
+            height: '100%',
+            width: '100%',
+            playback: {
+                controls: true,
+            },
+            events: {
+                onError: function(error) {
+                    console.error("Error:", error);
+                },
+                onPlay: function() {
+                    console.log("Video is playing");
+                }
+            }
         });
 
-        // Handle quality change (optional)
-        hls.on(Hls.Events.LEVELS_UPDATED, function(event, data) {
+        // Add Event Listener for Quality Levels (if supported)
+        player.on(Clappr.Events.PLAYBACK_LEVELS_AVAILABLE, function(levels) {
             const qualitySelector = document.getElementById('quality-selector');
+
+            // Clear existing options and add "Auto" as the first option
             qualitySelector.innerHTML = '<option value="auto">Auto</option>';
-            data.levels.forEach((level, index) => {
+
+            // Add quality levels dynamically
+            levels.forEach((level, index) => {
                 const option = document.createElement('option');
                 option.value = index;
-                option.textContent = `${level.height}p`;
+                option.textContent = `${level.height}p`; // Display resolution (e.g., 144p, 240p, etc.)
                 qualitySelector.appendChild(option);
             });
         });
-
-        // Function to change quality
-        function changeQuality() {
-            const qualitySelector = document.getElementById('quality-selector');
-            const quality = qualitySelector.value;
-
-            if (quality === 'auto') {
-                hls.startLevel = -1; // Auto Quality
-            } else {
-                hls.startLevel = parseInt(quality); // Set specific quality based on index
-            }
-        }
     } else {
-        console.error("HLS.js is not supported or no valid URL provided");
-        alert("No URL provided or HLS.js is not supported by your browser.");
+        alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
+    }
+
+    // Function to change quality
+    function changeQuality() {
+        const qualitySelector = document.getElementById('quality-selector');
+        const quality = qualitySelector.value;
+
+        if (quality === 'auto') {
+            player.setCurrentLevel(-1); // Auto Quality
+        } else {
+            player.setCurrentLevel(parseInt(quality)); // Set specific quality based on index
+        }
     }
 
     // Function to handle "Join Now" button
