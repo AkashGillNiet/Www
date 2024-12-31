@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CricketSparx</title>
-    <link href="https://vjs.zencdn.net/7.18.1/video-js.css" rel="stylesheet">
     <style>
         body {
             background-color: black;
@@ -69,7 +68,7 @@
             margin: 20px auto;
             text-align: center;
         }
-        .video-js {
+        #player {
             width: 100%;
             height: auto;
             border: 1px solid white;
@@ -103,7 +102,7 @@
             cursor: pointer;
         }
     </style>
-    <script src="https://vjs.zencdn.net/7.18.1/video.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
 
@@ -119,10 +118,7 @@
 
 <!-- Video Streaming Section -->
 <div id="streaming-container">
-    <video id="player" class="video-js vjs-default-skin" controls preload="auto">
-        <!-- Fallback content for browsers that do not support HTML5 video -->
-        <p>Your browser does not support the video tag.</p>
-    </video>
+    <video id="player" controls></video>
     <div class="controls">
         <select id="quality-selector" onchange="changeQuality()">
             <option value="auto">Auto</option>
@@ -148,45 +144,44 @@
     const hlsUrl = getQueryParam('url');
     console.log("HLS URL:", hlsUrl); // Debug log to check if the URL is fetched
 
-    let player;
-
-    if (hlsUrl) {
-        // Initialize Video.js Player
-        player = videojs('player', {
-            sources: [{
-                type: 'application/x-mpegURL',
-                src: hlsUrl
-            }],
-            autoplay: true,
-            muted: false,
-            controls: true,
-            preload: 'auto',
+    if (hlsUrl && Hls.isSupported()) {
+        // Initialize HLS.js Player
+        var video = document.getElementById('player');
+        var hls = new Hls();
+        
+        // Attach the HLS stream to the video element
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            console.log("HLS manifest parsed and video is ready");
         });
 
-        // Add Quality Levels (if available)
-        player.on('loadedmetadata', function() {
-            console.log("Metadata loaded for stream.");
-            // Example: Set quality options dynamically (You can add your logic to change quality)
+        // Handle quality change (optional)
+        hls.on(Hls.Events.LEVELS_UPDATED, function(event, data) {
             const qualitySelector = document.getElementById('quality-selector');
             qualitySelector.innerHTML = '<option value="auto">Auto</option>';
-            // Dynamically add more options here if you want
+            data.levels.forEach((level, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${level.height}p`;
+                qualitySelector.appendChild(option);
+            });
         });
-    } else {
-        alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
-        console.log("No URL provided."); // Debug log
-    }
 
-    // Function to change quality
-    function changeQuality() {
-        const qualitySelector = document.getElementById('quality-selector');
-        const quality = qualitySelector.value;
+        // Function to change quality
+        function changeQuality() {
+            const qualitySelector = document.getElementById('quality-selector');
+            const quality = qualitySelector.value;
 
-        if (quality === 'auto') {
-            player.playbackRate(1); // Auto Quality (Set based on available bandwidth)
-        } else {
-            // You can implement specific quality changes if the player supports it
-            console.log("Changing quality to: " + quality);
+            if (quality === 'auto') {
+                hls.startLevel = -1; // Auto Quality
+            } else {
+                hls.startLevel = parseInt(quality); // Set specific quality based on index
+            }
         }
+    } else {
+        console.error("HLS.js is not supported or no valid URL provided");
+        alert("No URL provided or HLS.js is not supported by your browser.");
     }
 
     // Function to handle "Join Now" button
