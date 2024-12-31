@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cricket Sparx</title>
+    <title>Universal Streaming Player</title>
     <style>
         body {
             background-color: black;
@@ -18,52 +18,13 @@
             height: 100vh;
         }
 
-        /* Full-Screen Popup */
-        #popup {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            color: white;
-            z-index: 9999;
-            text-align: center;
-        }
-
-        #popup button {
-            margin: 10px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #join-now {
-            background-color: #007bff;
-            color: white;
-        }
-
-        #already-joined {
-            background-color: #28a745;
-            color: white;
-        }
-
-        /* Header */
         #header {
             font-size: 28px;
             font-weight: bold;
             margin: 20px 0;
             text-align: center;
-            color: white;
         }
 
-        /* Video Container */
         #streaming-container {
             width: 100%;
             max-width: 800px;
@@ -71,7 +32,13 @@
             text-align: center;
         }
 
-        /* Button and Quality Selector */
+        #player {
+            width: 100%;
+            height: 400px;
+            background-color: black;
+            border: 1px solid white;
+        }
+
         .controls {
             display: flex;
             justify-content: center;
@@ -103,15 +70,8 @@
 </head>
 <body>
 
-<!-- Full-Screen Popup -->
-<div id="popup">
-    <p>Join our Telegram channel <a href="https://t.me/CricketSparx" target="_blank" style="color: lightblue; text-decoration: none;">@CricketSparx</a> for more links!</p>
-    <button id="join-now" onclick="joinNow()">Join Now</button>
-    <button id="already-joined" onclick="closePopup()">Already Joined</button>
-</div>
-
 <!-- Header -->
-<div id="header">CricketSparx</div>
+<div id="header">Universal Streaming Player</div>
 
 <!-- Video Streaming Section -->
 <div id="streaming-container">
@@ -143,6 +103,8 @@
     let player;
 
     if (hlsUrl) {
+        console.log('HLS URL: ', hlsUrl); // Log to check if the URL is correctly fetched
+
         // Initialize Clappr Player
         player = new Clappr.Player({
             source: hlsUrl,
@@ -172,6 +134,7 @@
             });
         });
     } else {
+        console.error("No URL parameter provided. Please add '?url=your_hls_link.m3u8' to the URL.");
         alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
     }
 
@@ -185,17 +148,6 @@
         } else {
             player.setCurrentLevel(parseInt(quality)); // Set specific quality based on index
         }
-    }
-
-    // Function to handle "Join Now" button
-    function joinNow() {
-        window.open('https://t.me/CricketSparx', '_blank');
-    }
-
-    // Function to close the popup
-    function closePopup() {
-        const popup = document.getElementById('popup');
-        popup.style.display = 'none'; // Hides the popup
     }
 
     // Function to open Telegram channel
